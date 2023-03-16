@@ -102,6 +102,12 @@ fn add(args: &[Val]) -> Val {
     )
 }
 
+fn parse_float(s: &str) -> Option<f64> {
+    s.parse::<f64>().ok()
+}
+
+
+
 fn main() {
     let mut env = HashMap::new();
     env.insert("+".to_string(), Val::Func(add));
