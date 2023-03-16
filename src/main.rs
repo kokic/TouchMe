@@ -3,24 +3,28 @@ use std::io::{stdin, stdout, Write};
 
 #[derive(Clone)]
 enum Val {
-    Num(i64),
-    Bool(bool),
+    Number(f64),
+    Boolean(bool),
     Symbol(String),
     List(Vec<Val>),
-    Func(fn(&[Val]) -> Val),
+    Function(fn(&[Val]) -> Val),
 }
 
 impl std::fmt::Display for Val {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // write!(f, "#unsupported");
 
-        write!(f, "{}", match self {
-            Val::Num(n) => n.to_string(),
-            Val::Bool(b) => b.to_string(),
-            Val::Symbol(sym) => sym.to_string(),
-            Val::List(_) => "#todo".to_string(),
-            Val::Func(_) => "#todo".to_string(),
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                Val::Number(n) => n.to_string(),
+                Val::Boolean(b) => b.to_string(),
+                Val::Symbol(sym) => sym.to_string(),
+                Val::List(_) => "#todo".to_string(),
+                Val::Function(_) => "#todo".to_string(),
+            }
+        )
     }
 }
 
@@ -38,16 +42,22 @@ fn parse(tokens: &mut Vec<String>) -> Val {
         }
         tokens.remove(0);
         return Val::List(list);
-    } else if tok == "#" {
+    } else if tok == "true" {
+        Val::Boolean(true)
+    } else if tok == "false" {
+        Val::Boolean(false)
+    }
+    /* else if tok == "#" {
         let bool_token = tokens.remove(0);
         return match bool_token.as_str() {
-            "t" => Val::Bool(true),
-            "f" => Val::Bool(false),
+            "t" => Val::Boolean(true),
+            "f" => Val::Boolean(false),
             _ => panic!("Invalid bool value"),
         };
-    } else {
+    } */
+    else {
         return match tok.parse() {
-            Ok(num) => Val::Num(num),
+            Ok(num) => Val::Number(num),
             Err(_) => Val::Symbol(tok),
         };
     }
@@ -55,8 +65,8 @@ fn parse(tokens: &mut Vec<String>) -> Val {
 
 fn eval(expr: &Val, env: &mut HashMap<String, Val>) -> Val {
     match expr {
-        Val::Num(n) => Val::Num(*n),
-        Val::Bool(b) => Val::Bool(*b),
+        Val::Number(n) => Val::Number(*n),
+        Val::Boolean(b) => Val::Boolean(*b),
         Val::Symbol(sym) => match env.get(sym) {
             Some(val) => val.clone(),
             None => panic!("Undefined symbol {}", sym),
@@ -74,13 +84,12 @@ fn eval(expr: &Val, env: &mut HashMap<String, Val>) -> Val {
                         };
                         let value = eval(&args[1], env);
                         env.insert(name, value);
-                        Val::Num(0)
+                        Val::Number(0.0)
                     }
                     _ => match eval(&first, env) {
-                        Val::Func(f) => f(&args
-                            .iter()
-                            .map(|arg| eval(arg, env))
-                            .collect::<Vec<Val>>()),
+                        Val::Function(f) => {
+                            f(&args.iter().map(|arg| eval(arg, env)).collect::<Vec<Val>>())
+                        }
                         _ => panic!("Invalid function call"),
                     },
                 },
@@ -91,28 +100,52 @@ fn eval(expr: &Val, env: &mut HashMap<String, Val>) -> Val {
     }
 }
 
-fn add(args: &[Val]) -> Val {
-    Val::Num(
+fn number_reduce<F>(args: &[Val], f: F) -> Val
+where
+    F: FnMut(f64, f64) -> f64,
+{
+    Val::Number(
         args.iter()
             .filter_map(|arg| match arg {
-                Val::Num(n) => Some(*n),
+                Val::Number(n) => Some(*n),
                 _ => None,
             })
-            .sum(),
+            .reduce(f)
+            .unwrap(),
     )
 }
 
-fn parse_float(s: &str) -> Option<f64> {
-    s.parse::<f64>().ok()
+fn add(args: &[Val]) -> Val {
+    number_reduce(args, |x, y| x + y)
 }
 
+fn sub(args: &[Val]) -> Val {
+    number_reduce(args, |x, y| x - y)
+}
 
+fn mul(args: &[Val]) -> Val {
+    number_reduce(args, |x, y| x * y)
+}
+
+fn div(args: &[Val]) -> Val {
+    number_reduce(args, |x, y| x / y)
+}
 
 fn main() {
     let mut env = HashMap::new();
-    env.insert("+".to_string(), Val::Func(add));
-    env.insert("add".to_string(), Val::Func(add));
-    env.insert("sum".to_string(), Val::Func(add));
+    env.insert("+".to_string(), Val::Function(add));
+    env.insert("add".to_string(), Val::Function(add));
+    env.insert("sum".to_string(), Val::Function(add));
+
+    env.insert("-".to_string(), Val::Function(sub));
+    env.insert("sub".to_string(), Val::Function(sub));
+
+    env.insert("*".to_string(), Val::Function(mul));
+    env.insert("mul".to_string(), Val::Function(mul));
+    env.insert("prod".to_string(), Val::Function(mul));
+
+    env.insert("/".to_string(), Val::Function(div));
+    env.insert("div".to_string(), Val::Function(div));
 
     loop {
         let mut input = String::new();
@@ -124,6 +157,5 @@ fn main() {
         let expr = parse(&mut tokens);
         let result = eval(&expr, &mut env);
         println!("{}", result);
-
     }
 }
