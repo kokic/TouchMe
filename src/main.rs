@@ -103,11 +103,11 @@ fn eval(expr: &Val, env: &mut HashMap<String, Val>) -> Val {
                         env.insert(name, value);
                         Val::Number(0.0)
                     }
-                    _ => match eval(&first, env) {
+                    s => match eval(&first, env) {
                         Val::Function(f) => {
                             f(&args.iter().map(|arg| eval(arg, env)).collect::<Vec<Val>>())
                         }
-                        _ => panic!("Invalid function call"),
+                        v => panic!("Invalid function call for symbol {}: {}", s, v),
                     },
                 },
                 _ => panic!("Invalid function call"),
@@ -148,7 +148,33 @@ fn div(args: &[Val]) -> Val {
     number_reduce(args, |x, y| x / y)
 }
 
+
+
+
+
+fn string(expected: &'static str)
+    -> impl Fn(&str) -> Result<(&str, ()), &str>
+{
+    move |input| match input.get(0..expected.len()) {
+        Some(next) if next == expected => {
+            Ok((&input[expected.len()..], ()))
+        }
+        _ => Err(input),
+    }
+}
+
+
+
+
+
+
+
 fn main() {
+
+    let letter_a = string("a");
+
+    println!("{:?}", letter_a("abc"));
+
     let mut env = HashMap::new();
     env.insert("+".to_string(), Val::Function(add));
     env.insert("add".to_string(), Val::Function(add));
