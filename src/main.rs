@@ -139,7 +139,8 @@ fn div(args: &[Val]) -> Val {
 */
 
 fn parse_a(input: &str) -> Result<(&str, String), ParseError> {
-    compiler::tokenizer::string_owned("a")(input)
+    compiler::tokenizer::character('a')(input)
+    
 }
 
 
@@ -149,9 +150,8 @@ fn main() {
     // let letter_a = parser.string("a");
 
     // let letter_a = compiler::tokenizer::token("a");
-    let f = parse_a;
 
-    let a_many = compiler::tokenizer::many(f);
+    let a_many = compiler::tokenizer::many(parse_a);
 
     println!("{:?}", a_many("aaaabc"))
 

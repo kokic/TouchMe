@@ -1,5 +1,3 @@
-
-
 // enum TouchMeTokenCategory {
 //     EOF,
 //     Error,
@@ -32,10 +30,6 @@
 //     cache: TouchMeToken,
 // }
 
-pub fn is_quotes(x: char) -> bool {
-    (x == '"') || (x == '\'')
-}
-
 pub fn is_builtin_operator(x: char) -> bool {
     (x == '+')
         || (x == '-')
@@ -60,27 +54,28 @@ pub fn is_builtin_operator(x: char) -> bool {
         || (x == ')')
 }
 
-
-
+pub fn is_quotes(x: char) -> bool {
+    (x == '"') || (x == '\'')
+}
 
 pub fn is_identifier_body(x: char) -> bool {
     x.is_alphabetic() || x.is_ascii_digit() || x == '_' || x == '-'
 }
 
-
-
-
-
-
-
-
 #[derive(Debug, PartialEq)]
 pub struct ParseError<'a> {
-    pub location: &'a str, 
-    pub expected: &'static str, 
-    
+    pub location: &'a str,
+    pub expected: String,
 }
 
+impl ParseError<'_> {
+    pub fn new<'a>(location: &'a str, expected: &'a str) -> ParseError<'a> {
+        ParseError {
+            location: location,
+            expected: expected.to_string(),
+        }
+    }
+}
 
 pub fn many<T>(
     parser: impl Fn(&str) -> Result<(&str, T), ParseError>,
@@ -88,7 +83,6 @@ pub fn many<T>(
     move |input| {
         let mut result = Vec::new();
         let mut remaining_input = input;
-
         loop {
             if let Ok((next_input, parse_result)) = parser(remaining_input) {
                 result.push(parse_result);
@@ -97,15 +91,11 @@ pub fn many<T>(
                 break;
             }
         }
-
         Ok((remaining_input, result))
     }
 }
 
-
-
-
-// pub fn string<'a>(
+// pub fn str<'a>(
 //     expected: &'static str,
 // ) -> impl Fn(&'a str) -> Result<(&'a str, &'a str), ParseError<'a>> {
 //     move |input| match input.starts_with(expected) {
@@ -117,8 +107,7 @@ pub fn many<T>(
 //     }
 // }
 
-
-pub fn string_owned<'a>(
+pub fn string<'a>(
     expected: &'static str,
 ) -> impl Fn(&'a str) -> Result<(&'a str, String), ParseError<'a>> {
     move |input| match input.starts_with(expected) {
@@ -126,6 +115,40 @@ pub fn string_owned<'a>(
             let len = expected.len();
             Ok((&input[len..], input[..len].to_owned()))
         }
-        false => Err(ParseError{ location: input, expected: expected }),
+        false => Err(ParseError {
+            location: input,
+            expected: expected.to_string(),
+        }),
     }
+}
+
+pub fn token<F>(predicate: F) -> impl Fn(&str) -> Result<(&str, String), ParseError>
+where
+    F: Fn(char) -> bool,
+{
+    move |input| {
+        let mut chars = input.chars();
+        match chars.next() {
+            Some(x) if predicate(x) => Ok((chars.as_str(), x.to_string())),
+            _ => Err(ParseError::new(input, "matching token")),
+        }
+    }
+}
+
+// pub fn character<'a>(
+//     expected: char,
+// ) -> impl Fn(&'a str) -> Result<(&'a str, String), ParseError<'a>> {
+//     move |input| match input.starts_with(expected) {
+//         true => Ok((&input[1..], expected.to_string())),
+//         false => Err(ParseError {
+//             location: input,
+//             expected: expected.to_string(),
+//         }),
+//     }
+// }
+
+pub fn character<'a>(
+    expected: char,
+) -> impl Fn(&'a str) -> Result<(&'a str, String), ParseError<'a>> {
+    move |input| token(|x| x == expected)(input)
 }
