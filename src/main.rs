@@ -1,6 +1,5 @@
 use crate::compiler::tokenizer;
 
-
 pub mod compiler;
 
 /*
@@ -141,10 +140,7 @@ fn div(args: &[Val]) -> Val {
 
 fn parse_a(input: &str) -> Result<(&str, String), compiler::parsec::ParseError> {
     compiler::parsec::character('a')(input)
-    
 }
-
-
 
 fn main() {
     // let parser = compiler::tokenizer::Parser { input: "abc" };
@@ -159,6 +155,10 @@ fn main() {
 
     println!("{:?}", _a_plus("aabc"));
     println!("{:?}", tokenizer::is_identifier("good-name"));
+
+    let _tokens = compiler::parsec::tokens(|s| s.starts_with("if "), 3);
+
+    println!("{:?}", _tokens("if cond"));
 
     // let mut env = HashMap::new();
     // env.insert("+".to_string(), Val::Function(add));

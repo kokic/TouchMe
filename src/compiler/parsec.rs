@@ -55,11 +55,9 @@ pub fn many<T>(
 pub fn some<T>(
     parser: impl Fn(&str) -> Result<(&str, T), ParseError>,
 ) -> impl Fn(&str) -> Result<(&str, Vec<T>), ParseError> {
-    move |input| {
-        match many(|x| parser(x))(input) {
-            Ok(x) if x.1.len() >= 1 => Ok(x),
-            _ => Err(ParseError::new(input, "some length should ge 1")),
-        }
+    move |input| match many(|x| parser(x))(input) {
+        Ok(x) if x.1.len() >= 1 => Ok(x),
+        _ => Err(ParseError::new(input, "some length should ge 1")),
     }
 }
 
@@ -87,11 +85,10 @@ pub fn asterisk(
     map(many(parser), |x| x.concat())
 }
 
-
 pub fn plus(
-  parser: impl Fn(&str) -> Result<(&str, String), ParseError>,
+    parser: impl Fn(&str) -> Result<(&str, String), ParseError>,
 ) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
-  map(some(parser), |x| x.concat())
+    map(some(parser), |x| x.concat())
 }
 
 // pub fn str<'a>(
@@ -130,6 +127,19 @@ where
         match chars.next() {
             Some(x) if predicate(x) => Ok((chars.as_str(), x.to_string())),
             _ => Err(ParseError::new(input, "#token-predicate")),
+        }
+    }
+}
+
+pub fn tokens<F>(predicate: F, len: usize) -> impl Fn(&str) -> Result<(&str, String), ParseError>
+where
+    F: Fn(&str) -> bool,
+{
+    move |input| {
+        let substr = &input[..len];
+        match predicate(substr) {
+            true => Ok((&input[len..], substr.to_string())),
+            false => Err(ParseError::new(input, "#tokens-predicate")),
         }
     }
 }
