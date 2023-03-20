@@ -1,5 +1,13 @@
+pub mod compiler;
+
 use std::collections::HashMap;
 use std::io::{stdin, stdout, Write};
+
+
+
+
+
+
 
 #[derive(Clone)]
 enum Val {
