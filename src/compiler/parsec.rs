@@ -1,4 +1,3 @@
-
 #[derive(Debug, PartialEq)]
 pub struct ParseError<'a> {
     pub location: &'a str,
@@ -35,8 +34,6 @@ where
     move |input| parser(input).map(|(r, x)| (r, morph(x)))
 }
 
-
-
 pub fn many<T>(
     parser: impl Fn(&str) -> Result<(&str, T), ParseError>,
 ) -> impl Fn(&str) -> Result<(&str, Vec<T>), ParseError> {
@@ -55,26 +52,40 @@ pub fn many<T>(
     }
 }
 
-
-
-pub fn asterisk(
-  parser: impl Fn(&str) -> Result<(&str, String), ParseError>,
-) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
-  move |input| {
-      let mut result = String::new();
-      let mut remaining_input = input;
-      loop {
-          if let Ok((next_input, parse_result)) = parser(remaining_input) {
-              result += &parse_result;
-              remaining_input = next_input;
-          } else {
-              break;
-          }
-      }
-      Ok((remaining_input, result))
-  }
+pub fn some<T>(
+    parser: impl Fn(&str) -> Result<(&str, T), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, Vec<T>), ParseError> {
+    move |input| {
+        match many(|x| parser(x))(input) {
+            Ok(x) if x.1.len() >= 1 => Ok(x),
+            _ => Err(ParseError::new(input, "some length should ge 1")),
+        }
+    }
 }
 
+// pub fn asterisk(
+//   parser: impl Fn(&str) -> Result<(&str, String), ParseError>,
+// ) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
+//   move |input| {
+//       let mut result = String::new();
+//       let mut remaining_input = input;
+//       loop {
+//           if let Ok((next_input, parse_result)) = parser(remaining_input) {
+//               result += &parse_result;
+//               remaining_input = next_input;
+//           } else {
+//               break;
+//           }
+//       }
+//       Ok((remaining_input, result))
+//   }
+// }
+
+pub fn asterisk(
+    parser: impl Fn(&str) -> Result<(&str, String), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
+    map(many(parser), |x| x.concat())
+}
 
 // pub fn str<'a>(
 //     expected: &'static str,
