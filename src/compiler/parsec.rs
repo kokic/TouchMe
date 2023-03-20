@@ -1,3 +1,4 @@
+
 #[derive(Debug, PartialEq)]
 pub struct ParseError<'a> {
     pub location: &'a str,
@@ -24,6 +25,18 @@ pub fn follow<A, B>(
     }
 }
 
+pub fn map<F, X, Y>(
+    parser: impl Fn(&str) -> Result<(&str, X), ParseError>,
+    morph: F,
+) -> impl Fn(&str) -> Result<(&str, Y), ParseError>
+where
+    F: Fn(X) -> Y,
+{
+    move |input| parser(input).map(|(r, x)| (r, morph(x)))
+}
+
+
+
 pub fn many<T>(
     parser: impl Fn(&str) -> Result<(&str, T), ParseError>,
 ) -> impl Fn(&str) -> Result<(&str, Vec<T>), ParseError> {
@@ -41,6 +54,27 @@ pub fn many<T>(
         Ok((remaining_input, result))
     }
 }
+
+
+
+pub fn asterisk(
+  parser: impl Fn(&str) -> Result<(&str, String), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
+  move |input| {
+      let mut result = String::new();
+      let mut remaining_input = input;
+      loop {
+          if let Ok((next_input, parse_result)) = parser(remaining_input) {
+              result += &parse_result;
+              remaining_input = next_input;
+          } else {
+              break;
+          }
+      }
+      Ok((remaining_input, result))
+  }
+}
+
 
 // pub fn str<'a>(
 //     expected: &'static str,

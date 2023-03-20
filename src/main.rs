@@ -1,3 +1,5 @@
+use crate::compiler::tokenizer;
+
 
 pub mod compiler;
 
@@ -152,7 +154,9 @@ fn main() {
 
     let _a_many = compiler::parsec::many(parse_a);
 
-    println!("{:?}", _a_many("aaaabc"))
+    let _a_a = compiler::parsec::follow(parse_a, parse_a);
+
+    println!("{:?}", tokenizer::is_identifier("good-name"))
 
     // let mut env = HashMap::new();
     // env.insert("+".to_string(), Val::Function(add));
