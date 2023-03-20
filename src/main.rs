@@ -153,11 +153,11 @@ fn main() {
     // let letter_a = compiler::tokenizer::token("a");
 
     let _a_many = compiler::parsec::many(parse_a);
-    let _a_some = compiler::parsec::some(parse_a);
+    let _a_plus = compiler::parsec::plus(parse_a);
 
     let _a_a = compiler::parsec::follow(parse_a, parse_a);
 
-    println!("{:?}", _a_some("xabc"));
+    println!("{:?}", _a_plus("aabc"));
     println!("{:?}", tokenizer::is_identifier("good-name"));
 
     // let mut env = HashMap::new();

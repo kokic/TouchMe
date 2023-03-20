@@ -87,6 +87,13 @@ pub fn asterisk(
     map(many(parser), |x| x.concat())
 }
 
+
+pub fn plus(
+  parser: impl Fn(&str) -> Result<(&str, String), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
+  map(some(parser), |x| x.concat())
+}
+
 // pub fn str<'a>(
 //     expected: &'static str,
 // ) -> impl Fn(&'a str) -> Result<(&'a str, &'a str), ParseError<'a>> {
