@@ -1,4 +1,3 @@
-use compiler::tokenizer::ParseError;
 
 pub mod compiler;
 
@@ -138,8 +137,8 @@ fn div(args: &[Val]) -> Val {
 
 */
 
-fn parse_a(input: &str) -> Result<(&str, String), ParseError> {
-    compiler::tokenizer::character('a')(input)
+fn parse_a(input: &str) -> Result<(&str, String), compiler::parsec::ParseError> {
+    compiler::parsec::character('a')(input)
     
 }
 
@@ -151,9 +150,9 @@ fn main() {
 
     // let letter_a = compiler::tokenizer::token("a");
 
-    let a_many = compiler::tokenizer::many(parse_a);
+    let _a_many = compiler::parsec::many(parse_a);
 
-    println!("{:?}", a_many("aaaabc"))
+    println!("{:?}", _a_many("aaaabc"))
 
     // let mut env = HashMap::new();
     // env.insert("+".to_string(), Val::Function(add));
