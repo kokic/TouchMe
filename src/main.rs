@@ -142,6 +142,10 @@ fn parse_a(input: &str) -> Result<(&str, String), compiler::parsec::ParseError> 
     compiler::parsec::character('a')(input)
 }
 
+fn parse_b(input: &str) -> Result<(&str, String), compiler::parsec::ParseError> {
+    compiler::parsec::character('b')(input)
+}
+
 fn main() {
     // let parser = compiler::tokenizer::Parser { input: "abc" };
     // let letter_a = parser.string("a");
@@ -154,11 +158,13 @@ fn main() {
     let _a_a = compiler::parsec::follow(parse_a, parse_a);
 
     println!("{:?}", _a_plus("aabc"));
-    println!("{:?}", tokenizer::is_identifier("good-name"));
+    println!("{:?}", tokenizer::identifier("good-name"));
 
     let _tokens = compiler::parsec::tokens(|s| s.starts_with("if "), 3);
 
-    println!("{:?}", _tokens("if cond"));
+
+    let _a_or_b = compiler::parsec::either(parse_a, parse_b);
+    println!("{:?}", _a_or_b("bax"));
 
     // let mut env = HashMap::new();
     // env.insert("+".to_string(), Val::Function(add));
