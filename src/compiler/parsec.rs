@@ -24,6 +24,19 @@ pub fn follow<A, B>(
     }
 }
 
+pub fn either<A>(
+    prev: impl Fn(&str) -> Result<(&str, A), ParseError>,
+    succ: impl Fn(&str) -> Result<(&str, A), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, A), ParseError> {
+    move |input| {
+        if let Ok((residue, a)) = prev(input) {
+            Ok((residue, a))
+        } else {
+            succ(input)
+        }
+    }
+}
+
 pub fn map<F, X, Y>(
     parser: impl Fn(&str) -> Result<(&str, X), ParseError>,
     morph: F,
