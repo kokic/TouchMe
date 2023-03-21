@@ -68,8 +68,11 @@ pub fn is_identifier_body(x: char) -> bool {
     is_identifier_head(x) || x.is_ascii_digit() || x == '-'
 }
 
-pub fn is_identifier(input: &str) -> Result<(&str, String), ParseError> {
+pub fn identifier(input: &str) -> Result<(&str, String), ParseError> {
     let head = token(is_identifier_head);
     let body = asterisk(token(is_identifier_body));
     map(follow(head, body), |(s, t)| s + &t)(input)
 }
+
+
+
