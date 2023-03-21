@@ -1,7 +1,5 @@
-use compiler::parser::parsec;
-use compiler::tokenizer;
 
-use crate::compiler::parser::combinators;
+use compiler::tokenizer;
 
 pub mod compiler;
 
@@ -141,35 +139,15 @@ fn div(args: &[Val]) -> Val {
 
 */
 
-fn parse_a(input: &str) -> Result<(&str, String), parsec::ParseError> {
-    parsec::character('a')(input)
-}
-
-fn parse_b(input: &str) -> Result<(&str, String), parsec::ParseError> {
-    parsec::character('b')(input)
-}
-
 fn main() {
     // let parser = compiler::tokenizer::Parser { input: "abc" };
     // let letter_a = parser.string("a");
 
     // let letter_a = compiler::tokenizer::token("a");
 
-    let _a_many = parsec::many(parse_a);
-    let _a_plus = parsec::plus(parse_a);
+    println!("{:?}", tokenizer::builtin_operator(" + "));
 
-    let _a_a = parsec::follow(parse_a, parse_a);
-
-    println!("{:?}", _a_plus("aabc"));
-    println!("{:?}", tokenizer::identifier("good-name"));
-
-    let _tokens = parsec::tokens(|s| s.starts_with("if "), 3);
-
-    let _a_or_b = parsec::either(
-        combinators::soft(parse_a), 
-        tokenizer::string(parse_b)
-    );
-    println!("{:?}", _a_or_b("「b」ar"));
+    println!("{:?}", tokenizer::identifier("this'is_not_a'good-name.over"));
 
     // let mut env = HashMap::new();
     // env.insert("+".to_string(), Val::Function(add));

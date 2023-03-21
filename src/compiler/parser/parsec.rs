@@ -54,8 +54,6 @@ pub fn skip<A, B>(
     map(follow(prev, succ), |x| x.0)
 }
 
-
-
 pub fn drop<A, B>(
     prev: impl Fn(&str) -> Result<(&str, A), ParseError>,
     succ: impl Fn(&str) -> Result<(&str, B), ParseError>,
@@ -197,11 +195,7 @@ where
 //     }
 // }
 
-
-
-pub fn character(
-    expected: char,
-) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
+pub fn character(expected: char) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
     move |input| match token(|x| x == expected)(input) {
         Ok(x) => Ok(x),
         _ => Err(ParseError {
@@ -218,8 +212,3 @@ pub fn between<A, B, X>(
 ) -> impl Fn(&str) -> Result<(&str, X), ParseError> {
     skip(drop(before, parser), after)
 }
-
-
-
-
-

@@ -30,7 +30,10 @@
 //     cache: TouchMeToken,
 // }
 
-use super::parser::parsec::{self, character};
+use super::parser::{
+    combinators,
+    parsec::{self, character, token},
+};
 
 pub fn is_builtin_operator(x: char) -> bool {
     (x == '+')
@@ -56,6 +59,10 @@ pub fn is_builtin_operator(x: char) -> bool {
         || (x == ')')
 }
 
+pub fn builtin_operator(input: &str) -> Result<(&str, String), parsec::ParseError> {
+    combinators::leak(token(is_builtin_operator))(input)
+}
+
 pub fn is_quotes(x: char) -> bool {
     (x == '"') || (x == '\'')
 }
@@ -73,11 +80,11 @@ pub fn string<X>(
 }
 
 pub fn is_identifier_head(x: char) -> bool {
-    x.is_alphabetic() || x == '_'
+    x.is_alphabetic() || x == '_' || x == '$'
 }
 
 pub fn is_identifier_body(x: char) -> bool {
-    is_identifier_head(x) || x.is_ascii_digit() || x == '-'
+    is_identifier_head(x) || x.is_ascii_digit() || x == '-' || x == '\''
 }
 
 pub fn identifier(input: &str) -> Result<(&str, String), parsec::ParseError> {
