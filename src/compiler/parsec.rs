@@ -54,10 +54,8 @@ pub fn skip<A, B>(
     map(follow(prev, succ), |x| x.0)
 }
 
-/**
- * move
- *
- */
+
+
 pub fn drop<A, B>(
     prev: impl Fn(&str) -> Result<(&str, A), ParseError>,
     succ: impl Fn(&str) -> Result<(&str, B), ParseError>,
@@ -205,4 +203,27 @@ pub fn between<A, B, X>(
     parser: impl Fn(&str) -> Result<(&str, X), ParseError>,
 ) -> impl Fn(&str) -> Result<(&str, X), ParseError> {
     skip(drop(before, parser), after)
+}
+
+
+
+
+
+
+pub fn space(input: &str) -> Result<(&str, String), ParseError> {
+    character(' ')(input)
+}
+
+pub fn space_asterisk(input: &str) -> Result<(&str, String), ParseError> {
+    asterisk(space)(input)
+}
+
+pub fn space_plus(input: &str) -> Result<(&str, String), ParseError> {
+    plus(space)(input)
+}
+
+pub fn soft<X>(
+    parser: impl Fn(&str) -> Result<(&str, X), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, X), ParseError> {
+    between(space_asterisk, space_asterisk, parser)
 }
