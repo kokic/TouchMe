@@ -185,9 +185,23 @@ where
 //     }
 // }
 
-pub fn character<'a>(
+// pub fn character<'a>(
+//     expected: char,
+// ) -> impl Fn(&'a str) -> Result<(&'a str, String), ParseError<'a>> {
+//     move |input| match token(|x| x == expected)(input) {
+//         Ok(x) => Ok(x),
+//         _ => Err(ParseError {
+//             location: input,
+//             expected: format!("start with '{}'", expected),
+//         }),
+//     }
+// }
+
+
+
+pub fn character(
     expected: char,
-) -> impl Fn(&'a str) -> Result<(&'a str, String), ParseError<'a>> {
+) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
     move |input| match token(|x| x == expected)(input) {
         Ok(x) => Ok(x),
         _ => Err(ParseError {
@@ -209,21 +223,3 @@ pub fn between<A, B, X>(
 
 
 
-
-pub fn space(input: &str) -> Result<(&str, String), ParseError> {
-    character(' ')(input)
-}
-
-pub fn space_asterisk(input: &str) -> Result<(&str, String), ParseError> {
-    asterisk(space)(input)
-}
-
-pub fn space_plus(input: &str) -> Result<(&str, String), ParseError> {
-    plus(space)(input)
-}
-
-pub fn soft<X>(
-    parser: impl Fn(&str) -> Result<(&str, X), ParseError>,
-) -> impl Fn(&str) -> Result<(&str, X), ParseError> {
-    between(space_asterisk, space_asterisk, parser)
-}
