@@ -13,6 +13,16 @@ impl ParseError<'_> {
     }
 }
 
+pub fn map<F, X, Y>(
+    parser: impl Fn(&str) -> Result<(&str, X), ParseError>,
+    morph: F,
+) -> impl Fn(&str) -> Result<(&str, Y), ParseError>
+where
+    F: Fn(X) -> Y,
+{
+    move |input| parser(input).map(|(r, x)| (r, morph(x)))
+}
+
 pub fn follow<A, B>(
     prev: impl Fn(&str) -> Result<(&str, A), ParseError>,
     succ: impl Fn(&str) -> Result<(&str, B), ParseError>,
@@ -37,14 +47,22 @@ pub fn either<A>(
     }
 }
 
-pub fn map<F, X, Y>(
-    parser: impl Fn(&str) -> Result<(&str, X), ParseError>,
-    morph: F,
-) -> impl Fn(&str) -> Result<(&str, Y), ParseError>
-where
-    F: Fn(X) -> Y,
-{
-    move |input| parser(input).map(|(r, x)| (r, morph(x)))
+pub fn skip<A, B>(
+    prev: impl Fn(&str) -> Result<(&str, A), ParseError>,
+    succ: impl Fn(&str) -> Result<(&str, B), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, A), ParseError> {
+    map(follow(prev, succ), |x| x.0)
+}
+
+/**
+ * move
+ *
+ */
+pub fn drop<A, B>(
+    prev: impl Fn(&str) -> Result<(&str, A), ParseError>,
+    succ: impl Fn(&str) -> Result<(&str, B), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, B), ParseError> {
+    map(follow(prev, succ), |x| x.1)
 }
 
 pub fn many<T>(
@@ -179,4 +197,12 @@ pub fn character<'a>(
             expected: format!("start with '{}'", expected),
         }),
     }
+}
+
+pub fn between<A, B, X>(
+    before: impl Fn(&str) -> Result<(&str, A), ParseError>,
+    after: impl Fn(&str) -> Result<(&str, B), ParseError>,
+    parser: impl Fn(&str) -> Result<(&str, X), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, X), ParseError> {
+    skip(drop(before, parser), after)
 }
