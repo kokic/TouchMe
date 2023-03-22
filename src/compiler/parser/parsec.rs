@@ -158,7 +158,7 @@ where
     }
 }
 
-pub fn tokens<F>(predicate: F, len: usize) -> impl Fn(&str) -> Result<(&str, String), ParseError>
+pub fn tokens<F>(len: usize, predicate: F) -> impl Fn(&str) -> Result<(&str, String), ParseError>
 where
     F: Fn(&str) -> bool,
 {
@@ -212,3 +212,12 @@ pub fn between<A, B, X>(
 ) -> impl Fn(&str) -> Result<(&str, X), ParseError> {
     skip(drop(before, parser), after)
 }
+
+
+
+
+
+
+
+
+

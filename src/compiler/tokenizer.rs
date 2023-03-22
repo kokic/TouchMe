@@ -35,6 +35,8 @@ use super::parser::{
     parsec::{self, character, token},
 };
 
+
+
 pub fn is_builtin_operator(x: char) -> bool {
     (x == '+')
         || (x == '-')
@@ -63,6 +65,9 @@ pub fn builtin_operator(input: &str) -> Result<(&str, String), parsec::ParseErro
     combinators::leak(token(is_builtin_operator))(input)
 }
 
+
+
+
 pub fn is_quotes(x: char) -> bool {
     (x == '"') || (x == '\'')
 }
@@ -70,6 +75,9 @@ pub fn is_quotes(x: char) -> bool {
 pub fn quote(input: &str) -> Result<(&str, String), parsec::ParseError> {
     parsec::token(is_quotes)(input)
 }
+
+
+
 
 pub fn string<X>(
     parser: impl Fn(&str) -> Result<(&str, X), parsec::ParseError>,
@@ -92,3 +100,8 @@ pub fn identifier(input: &str) -> Result<(&str, String), parsec::ParseError> {
     let body = parsec::asterisk(parsec::token(is_identifier_body));
     parsec::map(parsec::follow(head, body), |(s, t)| s + &t)(input)
 }
+
+
+
+
+
