@@ -2,24 +2,25 @@ use super::{
     ast::{BinaryExpr, Expr, FunctionExpr},
     parser::{
         combinators::{self},
-        parsec::{self, character, tokens},
+        parsec::{self, between, character, tokens},
     },
-    tokenizer::{identifier},
+    tokenizer::identifier,
 };
 
-
 pub fn primary_expr(input: &str) -> Result<(&str, Expr), parsec::ParseError> {
-    parsec::map(identifier, |x| Expr::Identifier(x))(input)
+    let paren = between(character('('), character(')'), expr);
+    let identifier = parsec::map(identifier, |x| Expr::Identifier(x));
+    parsec::either(paren, identifier)(input)
 }
 
 pub fn add_expr(input: &str) -> Result<(&str, Expr), parsec::ParseError> {
     let add_infix = combinators::leak(character('+'));
-    let parser = parsec::follow(parsec::follow(identifier, add_infix), identifier);
-    let morph = |x: ((String, String), String)| {
+    let parser = parsec::follow(parsec::follow(primary_expr, add_infix), primary_expr);
+    let morph = |x: ((Expr, String), Expr)| {
         Expr::Add(Box::new(BinaryExpr {
             operator: x.0 .1,
-            lhs: Expr::Identifier(x.0 .0),
-            rhs: Expr::Identifier(x.1),
+            lhs: x.0 .0,
+            rhs: x.1,
         }))
     };
     parsec::map(parser, morph)(input)

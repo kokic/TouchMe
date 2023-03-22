@@ -3,6 +3,10 @@
 pub enum Expr {
     Identifier(String),
 
+    Comma(Box<CommaExpr>),
+
+    Paren(Box<ParenExpr>),
+
     Function(Box<FunctionExpr>),
 
     FunctionCall(Box<FunctionCallExpr>),
@@ -46,9 +50,26 @@ impl std::fmt::Debug for Expr {
                 .field("lhs", &x.lhs)
                 .field("rhs", &x.rhs)
                 .finish(),
+            Expr::Comma(x) => f
+                .debug_struct("Comma")
+                .field("lhs", &x.lhs)
+                .field("rhs", &x.rhs)
+                .finish(),
+            Expr::Paren(x) => f.debug_struct("Paren").field("expr", &x.expr).finish(),
         }?;
         write!(f, "")
     }
+}
+
+#[derive(Clone, Hash)]
+pub struct ParenExpr {
+    pub expr: Expr,
+}
+
+#[derive(Clone, Hash)]
+pub struct CommaExpr {
+    pub lhs: Expr,
+    pub rhs: Expr,
 }
 
 #[derive(Clone, Hash)]
@@ -78,9 +99,6 @@ impl std::fmt::Debug for FunctionCallExpr {
 #[derive(Debug, Clone, Hash)]
 pub struct BinaryExpr {
     pub operator: String,
-
-    /// LHS expression.
     pub lhs: Expr,
-    /// RHS expression.
     pub rhs: Expr,
 }

@@ -148,7 +148,8 @@ fn main() {
     // let letter_a = compiler::tokenizer::token("a");
 
     println!("{:?}", accelerator::function("x => x"));
-    println!("{:?}", accelerator::function("  x  y =>  x + y "));
+    println!("{:?}", accelerator::function(" x  y =>  x + y"));
+    println!("{:?}", accelerator::function("x y z => (x + y) + z"));
 
     println!("{:?}", tokenizer::identifier("this'is_not_a'good-name.over"));
 
