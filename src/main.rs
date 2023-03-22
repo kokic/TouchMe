@@ -1,6 +1,8 @@
 
 use compiler::tokenizer;
 
+use crate::compiler::accelerator;
+
 pub mod compiler;
 
 /*
@@ -145,7 +147,8 @@ fn main() {
 
     // let letter_a = compiler::tokenizer::token("a");
 
-    println!("{:?}", tokenizer::builtin_operator(" + "));
+    println!("{:?}", accelerator::function("x => x"));
+    println!("{:?}", accelerator::function("  x  y =>  x + y "));
 
     println!("{:?}", tokenizer::identifier("this'is_not_a'good-name.over"));
 
