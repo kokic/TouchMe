@@ -92,21 +92,10 @@ pub fn err_at<'a, X>(message: &'a str, locator: Locator) -> Result<X, ParserErro
     err(format!("{}: error at {:?}.", message, locator).as_str())
 }
 
-pub trait Parser<S> {
+pub trait Parser<A> {
     type Value;
 
-    fn parse(&self, state: &mut S) -> Result<Self::Value, ParserError>;
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct Satisfied<F> {
-    satisfy: F,
-}
-
-impl<F> Satisfied<F> {
-    pub fn new(satisfy: F) -> Self {
-        Self { satisfy }
-    }
+    fn parse(&self, state: &mut A) -> Result<Self::Value, ParserError>;
 }
 
 impl<'a, F> Parser<State<'a>> for Satisfied<F>
@@ -124,6 +113,54 @@ where
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct Or<X> {
+    prev: X,
+    succ: X,
+}
+
+impl<X> Or<X> {
+    pub fn new(prev: X, succ: X) -> Self {
+        Self { prev, succ }
+    }
+}
+
+impl<S, X> Parser<S> for Or<X>
+where
+    X: Parser<S>,
+{
+    type Value = X::Value;
+
+    fn parse(&self, state: &mut S) -> Result<Self::Value, ParserError> {
+        match self.prev.parse(state) {
+            Ok(x) => Ok(x),
+            Err(_) => self.succ.parse(state),
+        }
+    }
+}
+
+pub trait ParserExtension<A>: Parser<A> {
+    fn or(self, other: Self) -> Or<Self>
+    where
+        Self: Sized,
+    {
+        Or::new(self, other)
+    }
+}
+
+impl<S, P: Parser<S>> ParserExtension<S> for P {}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Satisfied<F> {
+    satisfy: F,
+}
+
+impl<F> Satisfied<F> {
+    pub fn new(satisfy: F) -> Self {
+        Self { satisfy }
+    }
+}
+
 pub fn piece<F>(predicate: F) -> Satisfied<F>
 where
     F: Fn(&char) -> bool,
@@ -134,5 +171,3 @@ where
 pub fn character(expected: char) -> Satisfied<impl Fn(&char) -> bool> {
     piece(move |x| x == &expected)
 }
-
-

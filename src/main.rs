@@ -19,7 +19,10 @@ fn main() {
 
     println!(
         "{:?}",
-        parseco::piece(|x| *x == 'a').parse(&mut parseco::state("abc"))
+        parseco::piece(|x| *x == 'a')
+        // .or()
+        // .or(parseco::piece(|x: &char| *x == 'x'))
+        .parse(&mut parseco::state("abc"))
     );
 
     println!("{:?}", parsec::many(accelerator::primary_expr)("x => x y"));
