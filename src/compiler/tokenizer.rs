@@ -32,7 +32,7 @@
 
 use super::parser::{
     combinators,
-    parsec::{self, character, plus, token},
+    parsec::{self, character, either3, plus, token, twice},
 };
 
 pub fn is_builtin_operator(x: char) -> bool {
@@ -96,19 +96,21 @@ pub fn valid_string_content(input: &str) -> Result<(&str, String), parsec::Parse
     plus(token(|x| x != '\'' && x != '"' && x != '」'))(input)
 }
 
-
 /// match string of
 /// - empty `''` or `""` or `「」`
 /// - `valid_string_content`
 pub fn string(input: &str) -> Result<(&str, String), parsec::ParseError> {
-
     // of(quote)
     //     .twice()
     //     .either(of(left_and_right_corner_bracket))
     //     .either(of(string_of(valid_string_content)))
     //     .parse(input)
 
-    todo!()
+    either3(
+        twice(quote),
+        left_and_right_corner_bracket,
+        string_of(valid_string_content),
+    )(input)
 }
 
 pub fn is_identifier_head(x: char) -> bool {
