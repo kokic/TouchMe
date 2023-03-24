@@ -2,15 +2,29 @@ use super::{
     ast::{BinaryExpr, Expr, FunctionExpr},
     parser::{
         combinators::{self},
-        parsec::{self, between, character, tokens},
+        parsec::{self, between, character, token, tokens},
     },
-    tokenizer::identifier,
+    tokenizer::{valid_string_content, identifier},
 };
 
+/// if cannot find value (`identifier`) in this scope then parse it as string
 pub fn primary_expr(input: &str) -> Result<(&str, Expr), parsec::ParseError> {
-    let paren = between(character('('), character(')'), expr);
+
+    let paren = 
+    // parsec::of(expr)
+    // .between(character('('), character(')'));
+    
+    between(character('('), character(')'), expr);
+
+
+    
     let identifier = parsec::map(identifier, |x| Expr::Identifier(x));
-    parsec::either(paren, identifier)(input)
+    let number = parsec::map(token(|x| x.is_digit(10)), |x| {
+        Expr::Integer(x.parse::<i64>().unwrap())
+    });
+    let as_string = parsec::map(valid_string_content, |x| Expr::String(x));
+
+    parsec::either4(paren, identifier, number, as_string)(input)
 }
 
 pub fn add_expr(input: &str) -> Result<(&str, Expr), parsec::ParseError> {
@@ -30,10 +44,16 @@ pub fn expr(input: &str) -> Result<(&str, Expr), parsec::ParseError> {
     parsec::either(add_expr, primary_expr)(input)
 }
 
+
+
+
 /// match `soft ->` or `soft =>`
 pub fn arrow(input: &str) -> Result<(&str, String), parsec::ParseError> {
     combinators::soft(tokens(2, |x| x == "->" || x == "=>"))(input)
 }
+
+
+
 
 /// parameters must contain at least one parameter
 ///
@@ -43,6 +63,8 @@ pub fn parameters(input: &str) -> Result<(&str, Vec<Expr>), parsec::ParseError> 
         xs.iter().map(|x| Expr::Identifier(x.to_string())).collect()
     })(input)
 }
+
+
 
 /// accelerator function
 /// - is expression
@@ -60,3 +82,6 @@ pub fn function(input: &str) -> Result<(&str, Expr), parsec::ParseError> {
     };
     parsec::map(parser, morph)(input)
 }
+
+
+

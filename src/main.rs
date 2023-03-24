@@ -1,9 +1,52 @@
 
 use compiler::tokenizer;
 
-use crate::compiler::accelerator;
+use crate::compiler::{accelerator, parser::parsec};
 
 pub mod compiler;
+
+fn main() {
+    // let parser = compiler::tokenizer::Parser { input: "abc" };
+    // let letter_a = parser.string("a");
+
+    // let letter_a = compiler::tokenizer::token("a");
+    // println!("{:?}", tokenizer::string("''"));
+
+    println!("{:?}", parsec::many(accelerator::primary_expr)("x => x y"));
+    println!("{:?}", accelerator::function(" x  y =>  x + y"));
+    println!("{:?}", accelerator::function("x y z => (x + y) + z"));
+
+    println!("{:?}", tokenizer::identifier("this'is_not_a'good-name.over"));
+
+    // let mut env = HashMap::new();
+    // env.insert("+".to_string(), Val::Function(add));
+    // env.insert("add".to_string(), Val::Function(add));
+    // env.insert("sum".to_string(), Val::Function(add));
+
+    // env.insert("-".to_string(), Val::Function(sub));
+    // env.insert("sub".to_string(), Val::Function(sub));
+
+    // env.insert("*".to_string(), Val::Function(mul));
+    // env.insert("mul".to_string(), Val::Function(mul));
+    // env.insert("prod".to_string(), Val::Function(mul));
+
+    // env.insert("/".to_string(), Val::Function(div));
+    // env.insert("div".to_string(), Val::Function(div));
+
+    // loop {
+    //     let mut input = String::new();
+    //     print!(">>> ");
+    //     stdout().flush().expect("flush failed");
+    //     stdin().read_line(&mut input).expect("read failed");
+    //     let mut tokens: Vec<_> = input.split_whitespace().map(|s| s.to_string()).collect();
+
+    //     let expr = parse(&mut tokens);
+    //     let result = eval(&expr, &mut env);
+    //     println!("{}", result);
+    // }
+}
+
+
 
 /*
 use std::io::{stdin, stdout, Write};
@@ -140,43 +183,3 @@ fn div(args: &[Val]) -> Val {
 }
 
 */
-
-fn main() {
-    // let parser = compiler::tokenizer::Parser { input: "abc" };
-    // let letter_a = parser.string("a");
-
-    // let letter_a = compiler::tokenizer::token("a");
-
-    println!("{:?}", accelerator::function("x => x"));
-    println!("{:?}", accelerator::function(" x  y =>  x + y"));
-    println!("{:?}", accelerator::function("x y z => (x + y) + z"));
-
-    println!("{:?}", tokenizer::identifier("this'is_not_a'good-name.over"));
-
-    // let mut env = HashMap::new();
-    // env.insert("+".to_string(), Val::Function(add));
-    // env.insert("add".to_string(), Val::Function(add));
-    // env.insert("sum".to_string(), Val::Function(add));
-
-    // env.insert("-".to_string(), Val::Function(sub));
-    // env.insert("sub".to_string(), Val::Function(sub));
-
-    // env.insert("*".to_string(), Val::Function(mul));
-    // env.insert("mul".to_string(), Val::Function(mul));
-    // env.insert("prod".to_string(), Val::Function(mul));
-
-    // env.insert("/".to_string(), Val::Function(div));
-    // env.insert("div".to_string(), Val::Function(div));
-
-    // loop {
-    //     let mut input = String::new();
-    //     print!(">>> ");
-    //     stdout().flush().expect("flush failed");
-    //     stdin().read_line(&mut input).expect("read failed");
-    //     let mut tokens: Vec<_> = input.split_whitespace().map(|s| s.to_string()).collect();
-
-    //     let expr = parse(&mut tokens);
-    //     let result = eval(&expr, &mut env);
-    //     println!("{}", result);
-    // }
-}

@@ -1,7 +1,13 @@
 #[derive(Clone, Hash)]
 // #[non_exhaustive]
 pub enum Expr {
+    Integer(i64),
+
+    // Float(f64),
+
     Identifier(String),
+
+    String(String),
 
     Comma(Box<CommaExpr>),
 
@@ -56,6 +62,8 @@ impl std::fmt::Debug for Expr {
                 .field("rhs", &x.rhs)
                 .finish(),
             Expr::Paren(x) => f.debug_struct("Paren").field("expr", &x.expr).finish(),
+            Expr::Integer(x) => f.debug_struct("Int").field("value", x).finish(),
+            Expr::String(x) => f.debug_struct("String").field("value", x).finish(),
         }?;
         write!(f, "")
     }

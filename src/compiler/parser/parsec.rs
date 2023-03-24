@@ -23,6 +23,12 @@ where
     move |input| parser(input).map(|(r, x)| (r, morph(x)))
 }
 
+pub fn map_char_to_string(
+    parser: impl Fn(&str) -> Result<(&str, char), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
+    map(parser, |x| x.to_string())
+}
+
 pub fn follow<A, B>(
     prev: impl Fn(&str) -> Result<(&str, A), ParseError>,
     succ: impl Fn(&str) -> Result<(&str, B), ParseError>,
@@ -34,17 +40,45 @@ pub fn follow<A, B>(
     }
 }
 
+pub fn append(
+    prev: impl Fn(&str) -> Result<(&str, String), ParseError>,
+    succ: impl Fn(&str) -> Result<(&str, String), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
+    map(follow(prev, succ), |(s, t)| s + &t)
+}
+
+pub fn twice(
+    parser: impl Fn(&str) -> Result<(&str, String), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
+    let borrow = parser;
+    move |input| append(&borrow, &borrow)(input)
+}
+
 pub fn either<A>(
     prev: impl Fn(&str) -> Result<(&str, A), ParseError>,
     succ: impl Fn(&str) -> Result<(&str, A), ParseError>,
 ) -> impl Fn(&str) -> Result<(&str, A), ParseError> {
-    move |input| {
-        if let Ok((residue, a)) = prev(input) {
-            Ok((residue, a))
-        } else {
-            succ(input)
-        }
+    move |input| match prev(input) {
+        Ok(x) => Ok(x),
+        Err(_) => succ(input),
     }
+}
+
+pub fn either3<A>(
+    a: impl Fn(&str) -> Result<(&str, A), ParseError>,
+    b: impl Fn(&str) -> Result<(&str, A), ParseError>,
+    c: impl Fn(&str) -> Result<(&str, A), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, A), ParseError> {
+    either(either(a, b), c)
+}
+
+pub fn either4<A>(
+    a: impl Fn(&str) -> Result<(&str, A), ParseError>,
+    b: impl Fn(&str) -> Result<(&str, A), ParseError>,
+    c: impl Fn(&str) -> Result<(&str, A), ParseError>,
+    d: impl Fn(&str) -> Result<(&str, A), ParseError>,
+) -> impl Fn(&str) -> Result<(&str, A), ParseError> {
+    either(either3(a, b, c), d)
 }
 
 pub fn skip<A, B>(
@@ -67,14 +101,18 @@ pub fn many<T>(
     move |input| {
         let mut result = Vec::new();
         let mut remaining_input = input;
-        loop {
-            if let Ok((next_input, parse_result)) = parser(remaining_input) {
-                result.push(parse_result);
-                remaining_input = next_input;
-            } else {
-                break;
+
+        if input.len() >= 1 {
+            loop {
+                if let Ok((next_input, parse_result)) = parser(remaining_input) {
+                    result.push(parse_result);
+                    remaining_input = next_input;
+                } else {
+                    break;
+                }
             }
         }
+
         Ok((remaining_input, result))
     }
 }
@@ -145,29 +183,39 @@ pub fn string<'a>(
     }
 }
 
-pub fn token<F>(predicate: F) -> impl Fn(&str) -> Result<(&str, String), ParseError>
+pub fn token_direct<F>(predicate: F) -> impl Fn(&str) -> Result<(&str, char), ParseError>
 where
     F: Fn(char) -> bool,
 {
     move |input| {
         let mut chars = input.chars();
         match chars.next() {
-            Some(x) if predicate(x) => Ok((chars.as_str(), x.to_string())),
+            Some(x) if predicate(x) => Ok((chars.as_str(), x)),
             _ => Err(ParseError::new(input, "#token-predicate")),
         }
     }
+}
+
+pub fn token<F>(predicate: F) -> impl Fn(&str) -> Result<(&str, String), ParseError>
+where
+    F: Fn(char) -> bool,
+{
+    map_char_to_string(token_direct(predicate))
 }
 
 pub fn tokens<F>(len: usize, predicate: F) -> impl Fn(&str) -> Result<(&str, String), ParseError>
 where
     F: Fn(&str) -> bool,
 {
-    move |input| {
-        let substr = &input[..len];
-        match predicate(substr) {
-            true => Ok((&input[len..], substr.to_string())),
-            false => Err(ParseError::new(input, "#tokens-predicate")),
+    move |input| match len <= input.len() {
+        true => {
+            let substr = &input[..len];
+            match predicate(substr) {
+                true => Ok((&input[len..], substr.to_string())),
+                false => Err(ParseError::new(input, "#tokens-predicate")),
+            }
         }
+        false => Err(ParseError::new(input, "#tokens-len ≤ input.len")),
     }
 }
 
@@ -195,14 +243,18 @@ where
 //     }
 // }
 
-pub fn character(expected: char) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
-    move |input| match token(|x| x == expected)(input) {
+pub fn character_direct(expected: char) -> impl Fn(&str) -> Result<(&str, char), ParseError> {
+    move |input| match token_direct(|x| x == expected)(input) {
         Ok(x) => Ok(x),
         _ => Err(ParseError {
             location: input,
             expected: format!("start with '{}'", expected),
         }),
     }
+}
+
+pub fn character(expected: char) -> impl Fn(&str) -> Result<(&str, String), ParseError> {
+    map_char_to_string(character_direct(expected))
 }
 
 pub fn between<A, B, X>(
@@ -212,12 +264,3 @@ pub fn between<A, B, X>(
 ) -> impl Fn(&str) -> Result<(&str, X), ParseError> {
     skip(drop(before, parser), after)
 }
-
-
-
-
-
-
-
-
-
