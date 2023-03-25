@@ -47,7 +47,7 @@ pub fn state<'a>(input: &'a str) -> State<'a> {
 
 impl<'a> Iterator for State<'a> {
     type Item = char;
-    
+
     fn next(&mut self) -> Option<Self::Item> {
         let x = self.source.next()?;
         self.locator = match x {
@@ -93,12 +93,25 @@ pub fn err_at<'a, X>(message: &'a str, locator: Locator) -> Result<X, ParserErro
     err(format!("{}: error at {:?}.", message, locator).as_str())
 }
 
-
-
 pub trait Parser<A> {
     type Value;
 
     fn parse(&self, state: &mut A) -> Result<Self::Value, ParserError>;
+
+    fn map<B, F>(self, morph: F) -> Map<Self, F>
+    where
+        Self: Sized,
+        F: Fn(Self::Value) -> B,
+    {
+        Map::new(self, morph)
+    }
+
+    fn twice(self) -> Twice<Self>
+    where
+        Self: Parser<A, Value = String> + Sized,
+    {
+        Twice { parser: self }
+    }
 
     fn or<B>(self, succ: B) -> Or<Self, B>
     where
@@ -109,6 +122,58 @@ pub trait Parser<A> {
     }
 }
 
+// #[derive(Clone, Copy, Debug)]
+// pub struct Twice<A> {
+//     parser: A,
+// }
+
+
+// #[derive(Clone, Copy)]
+pub struct Map<P, F> {
+    parser: P,
+    morph: F,
+}
+
+impl<P, F> Map<P, F> {
+    pub fn new(parser: P, morph: F) -> Self {
+        Self { parser, morph }
+    }
+}
+
+impl<S, B, P: Parser<S>, F> Parser<S> for Map<P, F>
+where
+    F: Fn(P::Value) -> B,
+{
+    type Value = B;
+
+    fn parse(&self, stream: &mut S) -> Result<Self::Value, ParserError> {
+        self.parser.parse(stream).map(&self.morph)
+    }
+}
+
+
+
+
+
+
+pub struct Twice<A> {
+    parser: A,
+}
+
+impl<S, A> Parser<S> for Twice<A>
+where
+    A: Parser<S, Value = String>,
+{
+    type Value = A::Value;
+
+    fn parse(&self, state: &mut S) -> Result<Self::Value, ParserError> {
+        match (self.parser.parse(state), self.parser.parse(state)) {
+            (Ok(s), Ok(t)) => Ok(s + &t),
+            (Err(_), _) => err("twice but failed at first"),
+            (_, Err(_)) => err("twice but failed at second"),
+        }
+    }
+}
 
 
 
@@ -128,7 +193,7 @@ impl<A, B> Or<A, B> {
 impl<S: Clone, A, B> Parser<S> for Or<A, B>
 where
     A: Parser<S>,
-    B: Parser<S, Value = A::Value>
+    B: Parser<S, Value = A::Value>,
 {
     type Value = A::Value;
 
@@ -140,6 +205,8 @@ where
         }
     }
 }
+
+
 
 
 
@@ -160,6 +227,7 @@ where
         }
     }
 }
+
 
 #[derive(Clone, Copy, Debug)]
 pub struct Satisfied<F> {

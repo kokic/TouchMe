@@ -19,16 +19,11 @@ fn main() {
 
     let piece_a = parseco::piece(|x| *x == 'a');
     let piece_x = parseco::piece(|x| *x == 'x');
+    let piece_a_or_x = piece_a.or(piece_x);
+    let piece_aa = piece_a.map(|x| x.to_string()).twice();
 
-    println!(
-        "{:?}",
-        piece_a.or(piece_x).parse(&mut parseco::state("xabc"))
-    );
-
-    println!(
-        "{:?}",
-        piece_a.or(piece_x).parse(&mut parseco::state("abc"))
-    );
+    println!("{:?}", piece_aa.parse(&mut parseco::state("aabc")));
+    println!("{:?}", piece_a_or_x.parse(&mut parseco::state("abc")));
 
     println!("{:?}", parsec::many(accelerator::primary_expr)("x => x y"));
     println!("{:?}", accelerator::function(" x  y =>  x + y"));
