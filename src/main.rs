@@ -17,12 +17,17 @@ fn main() {
     // let letter_a = compiler::tokenizer::token("a");
     // println!("{:?}", tokenizer::string("''"));
 
+    let piece_a = parseco::piece(|x| *x == 'a');
+    let piece_x = parseco::piece(|x| *x == 'x');
+
     println!(
         "{:?}",
-        parseco::piece(|x| *x == 'a')
-        // .or()
-        // .or(parseco::piece(|x: &char| *x == 'x'))
-        .parse(&mut parseco::state("abc"))
+        piece_a.or(piece_x).parse(&mut parseco::state("xabc"))
+    );
+
+    println!(
+        "{:?}",
+        piece_a.or(piece_x).parse(&mut parseco::state("abc"))
     );
 
     println!("{:?}", parsec::many(accelerator::primary_expr)("x => x y"));

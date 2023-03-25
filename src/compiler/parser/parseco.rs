@@ -47,6 +47,7 @@ pub fn state<'a>(input: &'a str) -> State<'a> {
 
 impl<'a> Iterator for State<'a> {
     type Item = char;
+    
     fn next(&mut self) -> Option<Self::Item> {
         let x = self.source.next()?;
         self.locator = match x {
@@ -92,11 +93,58 @@ pub fn err_at<'a, X>(message: &'a str, locator: Locator) -> Result<X, ParserErro
     err(format!("{}: error at {:?}.", message, locator).as_str())
 }
 
+
+
 pub trait Parser<A> {
     type Value;
 
     fn parse(&self, state: &mut A) -> Result<Self::Value, ParserError>;
+
+    fn or<B>(self, succ: B) -> Or<Self, B>
+    where
+        Self: Sized,
+        // B: Parser<A, Value = Self::Value>,
+    {
+        Or::new(self, succ)
+    }
 }
+
+
+
+
+
+#[derive(Clone, Copy, Debug)]
+pub struct Or<A, B> {
+    prev: A,
+    succ: B,
+}
+
+impl<A, B> Or<A, B> {
+    pub fn new(prev: A, succ: B) -> Self {
+        Self { prev, succ }
+    }
+}
+
+impl<S: Clone, A, B> Parser<S> for Or<A, B>
+where
+    A: Parser<S>,
+    B: Parser<S, Value = A::Value>
+{
+    type Value = A::Value;
+
+    fn parse(&self, state: &mut S) -> Result<Self::Value, ParserError> {
+        let mut state_copied = state.clone();
+        match self.prev.parse(state) {
+            Ok(x) => Ok(x),
+            Err(_) => self.succ.parse(&mut state_copied),
+        }
+    }
+}
+
+
+
+
+
 
 impl<'a, F> Parser<State<'a>> for Satisfied<F>
 where
@@ -112,43 +160,6 @@ where
         }
     }
 }
-
-#[derive(Clone, Copy, Debug)]
-pub struct Or<X> {
-    prev: X,
-    succ: X,
-}
-
-impl<X> Or<X> {
-    pub fn new(prev: X, succ: X) -> Self {
-        Self { prev, succ }
-    }
-}
-
-impl<S, X> Parser<S> for Or<X>
-where
-    X: Parser<S>,
-{
-    type Value = X::Value;
-
-    fn parse(&self, state: &mut S) -> Result<Self::Value, ParserError> {
-        match self.prev.parse(state) {
-            Ok(x) => Ok(x),
-            Err(_) => self.succ.parse(state),
-        }
-    }
-}
-
-pub trait ParserExtension<A>: Parser<A> {
-    fn or(self, other: Self) -> Or<Self>
-    where
-        Self: Sized,
-    {
-        Or::new(self, other)
-    }
-}
-
-impl<S, P: Parser<S>> ParserExtension<S> for P {}
 
 #[derive(Clone, Copy, Debug)]
 pub struct Satisfied<F> {
