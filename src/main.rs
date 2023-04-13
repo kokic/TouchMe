@@ -29,6 +29,7 @@ fn main() {
     println!("{:?}", str_aa.parse(&mut parseco::state("aaaabbbb")));
     println!("{:?}", str_a.plus().parse(&mut parseco::state("aaaabbbb")));
     println!("{:?}", str_a.asterisk().parse(&mut parseco::state("cab")));
+    println!("{:?}", str_a.any().parse(&mut parseco::state("aaab")));
     println!("{:?}", piece_a_or_x.parse(&mut parseco::state("abc")));
 
 

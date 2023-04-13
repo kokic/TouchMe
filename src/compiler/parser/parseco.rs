@@ -106,6 +106,13 @@ pub trait Parser<A> {
         Map::new(self, morph)
     }
 
+    fn any(self) -> Any<Self>
+    where
+        Self: Parser<A, Value = String> + Sized,
+    {
+        Any { parser: self }
+    }
+
     fn twice(self) -> Twice<Self>
     where
         Self: Parser<A, Value = String> + Sized,
@@ -159,6 +166,38 @@ where
     }
 }
 
+
+
+
+
+
+
+
+
+
+pub struct Any<A> {
+    parser: A,
+}
+
+impl<S, A: Parser<S>> Parser<S> for Any<A> {
+    type Value = Vec<A::Value>;
+
+    fn parse(&self, state: &mut S) -> Result<Self::Value, ParserError> {
+        let mut vec = Vec::new();
+        loop {
+            match self.parser.parse(state) {
+                Ok(x) => vec.push(x),
+                Err(_) => break,
+            }
+        }
+        Ok(vec)
+    }
+}
+
+
+
+
+
 #[derive(Clone, Copy, Debug)]
 pub struct Twice<A> {
     parser: A,
@@ -178,6 +217,11 @@ where
         }
     }
 }
+
+
+
+
+
 
 pub struct Asterisk<A> {
     parser: A,
