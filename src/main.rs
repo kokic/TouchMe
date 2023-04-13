@@ -1,9 +1,9 @@
-use compiler::tokenizer;
+// use compiler::tokenizer;
 
 use crate::compiler::{
-    accelerator,
+    // accelerator,
     parser::{
-        parsec,
+        // parsec,
         parseco::{self, Parser},
     },
 };
@@ -17,22 +17,37 @@ fn main() {
     // let letter_a = compiler::tokenizer::token("a");
     // println!("{:?}", tokenizer::string("''"));
 
-    let piece_a = parseco::piece(|x| *x == 'a');
-    let piece_x = parseco::piece(|x| *x == 'x');
-    let piece_a_or_x = piece_a.or(piece_x);
-    let piece_aa = piece_a.map(|x| x.to_string()).twice();
+    // let piece_a = parseco::piece(|x| *x == 'a');
+    let piece_a = character!('a');
+    let str_a = piece_a.map(|x| x.to_string());
 
-    println!("{:?}", piece_aa.parse(&mut parseco::state("aabc")));
+    let piece_x = character!('x');
+
+    let piece_a_or_x = piece_a.or(piece_x);
+    let str_aa = str_a.twice();
+
+    println!("{:?}", str_aa.parse(&mut parseco::state("aaaabbbb")));
+    println!("{:?}", str_a.plus().parse(&mut parseco::state("aaaabbbb")));
+    println!("{:?}", str_a.asterisk().parse(&mut parseco::state("cab")));
+    println!("{:?}", str_a.any().parse(&mut parseco::state("aaab")));
     println!("{:?}", piece_a_or_x.parse(&mut parseco::state("abc")));
 
-    println!("{:?}", parsec::many(accelerator::primary_expr)("x => x y"));
-    println!("{:?}", accelerator::function(" x  y =>  x + y"));
-    println!("{:?}", accelerator::function("x y z => (x + y) + z"));
 
-    println!(
-        "{:?}",
-        tokenizer::identifier("this'is_not_a'good-name.over")
-    );
+
+
+
+
+    // println!("{:?}", parsec::many(accelerator::primary_expr)("x => x y"));
+    // println!("{:?}", accelerator::function(" x  y =>  x + y"));
+    // println!("{:?}", accelerator::function("x y z => (x + y) + z"));
+
+    // println!(
+    //     "{:?}",
+    //     tokenizer::identifier("this'is_not_a'good-name.over")
+    // );
+
+
+
 
     // let mut env = HashMap::new();
     // env.insert("+".to_string(), Val::Function(add));
