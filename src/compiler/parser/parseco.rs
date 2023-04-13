@@ -113,6 +113,20 @@ pub trait Parser<A> {
         Twice { parser: self }
     }
 
+    fn asterisk(self) -> Asterisk<Self>
+    where
+        Self: Parser<A, Value = String> + Sized,
+    {
+        Asterisk { parser: self }
+    }
+
+    fn plus(self) -> Plus<Self>
+    where
+        Self: Parser<A, Value = String> + Sized,
+    {
+        Plus { parser: self }
+    }
+
     fn or<B>(self, succ: B) -> Or<Self, B>
     where
         Self: Sized,
@@ -122,13 +136,7 @@ pub trait Parser<A> {
     }
 }
 
-// #[derive(Clone, Copy, Debug)]
-// pub struct Twice<A> {
-//     parser: A,
-// }
-
-
-// #[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Map<P, F> {
     parser: P,
     morph: F,
@@ -151,11 +159,7 @@ where
     }
 }
 
-
-
-
-
-
+#[derive(Clone, Copy, Debug)]
 pub struct Twice<A> {
     parser: A,
 }
@@ -175,8 +179,53 @@ where
     }
 }
 
+pub struct Asterisk<A> {
+    parser: A,
+}
 
+impl<S, A> Parser<S> for Asterisk<A>
+where
+    A: Parser<S, Value = String>,
+{
+    type Value = A::Value;
 
+    fn parse(&self, state: &mut S) -> Result<Self::Value, ParserError> {
+        let mut buffer = "".to_string();
+        loop {
+            match self.parser.parse(state) {
+                Ok(x) => buffer += &x,
+                Err(_) => break,
+            }
+        }
+        Ok(buffer)
+    }
+}
+
+pub struct Plus<A> {
+    parser: A,
+}
+
+impl<S, A> Parser<S> for Plus<A>
+where
+    A: Parser<S, Value = String>,
+{
+    type Value = A::Value;
+
+    fn parse(&self, state: &mut S) -> Result<Self::Value, ParserError> {
+        match self.parser.parse(state) {
+            Ok(mut s) => {
+                loop {
+                    match self.parser.parse(state) {
+                        Ok(x) => s += &x,
+                        Err(_) => break,
+                    }
+                }
+                Ok(s)
+            }
+            Err(_) => err("plus but failed at first"),
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct Or<A, B> {
@@ -206,13 +255,6 @@ where
     }
 }
 
-
-
-
-
-
-
-
 impl<'a, F> Parser<State<'a>> for Satisfied<F>
 where
     F: Fn(&char) -> bool,
@@ -227,7 +269,6 @@ where
         }
     }
 }
-
 
 #[derive(Clone, Copy, Debug)]
 pub struct Satisfied<F> {
@@ -247,6 +288,10 @@ where
     Satisfied::new(predicate)
 }
 
-pub fn character(expected: char) -> Satisfied<impl Fn(&char) -> bool> {
-    piece(move |x| x == &expected)
+// remark: closure type unique
+#[macro_export]
+macro_rules! character {
+    ($x:literal) => {
+        parseco::piece(|x| *x == $x)
+    };
 }
