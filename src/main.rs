@@ -1,12 +1,6 @@
 // use compiler::tokenizer;
 
-use crate::compiler::{
-    // accelerator,
-    parser::{
-        // parsec,
-        parseco::{self, Parser},
-    },
-};
+use crate::compiler::parser::parseco::{self, pieces, Parser};
 
 pub mod compiler;
 
@@ -30,12 +24,11 @@ fn main() {
     println!("{:?}", str_a.plus().parse(&mut parseco::state("aaaabbbb")));
     println!("{:?}", str_a.asterisk().parse(&mut parseco::state("cab")));
     println!("{:?}", str_a.any().parse(&mut parseco::state("aaab")));
+
+    let ps = parseco::pieces(|x| true);
+    // println!("{:?}", ps.parse(&mut parseco::state("abc")));
+
     println!("{:?}", piece_a_or_x.parse(&mut parseco::state("abc")));
-
-
-
-
-
 
     // println!("{:?}", parsec::many(accelerator::primary_expr)("x => x y"));
     // println!("{:?}", accelerator::function(" x  y =>  x + y"));
@@ -45,9 +38,6 @@ fn main() {
     //     "{:?}",
     //     tokenizer::identifier("this'is_not_a'good-name.over")
     // );
-
-
-
 
     // let mut env = HashMap::new();
     // env.insert("+".to_string(), Val::Function(add));

@@ -339,3 +339,25 @@ macro_rules! character {
         parseco::piece(|x| *x == $x)
     };
 }
+
+
+
+
+
+
+pub fn pieces<F>(predicate: F) -> Satisfied<F>
+where
+    F: Fn(&str) -> bool,
+{
+    Satisfied::new(predicate)
+}
+
+
+// // remark: closure type unique
+// #[macro_export]
+// macro_rules! string {
+//     ($s:literal) => {
+//         parseco::pieces(|x| x.eq($s))
+//     };
+// }
+
